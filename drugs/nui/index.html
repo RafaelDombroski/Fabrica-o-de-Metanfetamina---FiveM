@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    />
+    <title>Estação de Produção Química</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          sans-serif;
+        min-height: 100vh;
+        color: white;
+        display: none; /* Inicialmente oculto */
+      }
+
+      .production-interface {
+        position: fixed;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 50;
+        width: 900px;
+        max-width: 95vw;
+      }
+
+      .card {
+        background: rgba(17, 24, 39, 0.95);
+        /* backdrop-filter: blur(8px); */
+        border: 1px solid #374151;
+        border-radius: 12px;
+        padding: 24px;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #374151;
+        padding-bottom: 16px;
+      }
+
+      .header-icon {
+        padding: 8px;
+        background: rgba(59, 130, 246, 0.2);
+        border-radius: 8px;
+      }
+
+      .header-title {
+        font-size: 20px;
+        font-weight: bold;
+        color: white;
+      }
+
+      .status-indicator {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+        color: #9ca3af;
+      }
+
+      .close-button {
+        background: #ef4444;
+        color: white;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-left: 12px;
+      }
+
+      .close-button:hover {
+        background: #dc2626;
+      }
+
+      .main-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 24px;
+      }
+
+      .section-title {
+        font-size: 18px;
+        font-weight: 600;
+        color: white;
+        margin-bottom: 16px;
+      }
+
+      .formula-item {
+        padding: 12px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid #4b5563;
+        background: rgba(31, 41, 55, 0.5);
+        margin-bottom: 8px;
+      }
+
+      .formula-item:hover {
+        background: rgba(55, 65, 81, 0.5);
+      }
+
+      .formula-item.selected {
+        background: rgba(59, 130, 246, 0.2);
+        border-color: #3b82f6;
+        box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+      }
+
+      .formula-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .formula-name {
+        color: white;
+        font-weight: 500;
+      }
+
+      .formula-purity {
+        color: #60a5fa;
+        font-size: 14px;
+        font-weight: bold;
+      }
+
+      .formula-details {
+        background: rgba(31, 41, 55, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid #4b5563;
+        margin-top: 16px;
+      }
+
+      .ingredients-title {
+        color: white;
+        font-weight: 500;
+        margin-bottom: 12px;
+      }
+
+      .ingredient-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+        margin-bottom: 8px;
+      }
+
+      .ingredient-icon {
+        padding: 6px;
+        background: #374151;
+        border-radius: 4px;
+      }
+
+      .ingredient-name {
+        color: #d1d5db;
+      }
+
+      .ingredient-amount {
+        color: #60a5fa;
+        margin-left: auto;
+      }
+
+      .add-button {
+        width: 100%;
+        background: #2563eb;
+        color: white;
+        border: none;
+        padding: 12px;
+        border-radius: 6px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: background 0.2s;
+        margin-top: 16px;
+      }
+
+      .add-button:hover {
+        background: #1d4ed8;
+      }
+
+      .add-button:disabled {
+        background: #6b7280;
+        cursor: not-allowed;
+      }
+
+      .empty-queue {
+        background: rgba(31, 41, 55, 0.3);
+        border-radius: 8px;
+        padding: 24px;
+        border: 1px solid #4b5563;
+        text-align: center;
+      }
+
+      .empty-icon {
+        width: 32px;
+        height: 32px;
+        color: #6b7280;
+        margin: 0 auto 8px;
+      }
+
+      .empty-text {
+        color: #9ca3af;
+      }
+
+      .queue-container {
+        max-height: 320px;
+        overflow-y: auto;
+      }
+
+      .queue-item {
+        background: rgba(31, 41, 55, 0.5);
+        border-radius: 8px;
+        padding: 16px;
+        border: 1px solid #4b5563;
+        margin-bottom: 12px;
+      }
+
+      .queue-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: 12px;
+      }
+
+      .queue-info h5 {
+        color: white;
+        font-weight: 500;
+        margin-bottom: 4px;
+      }
+
+      .queue-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 14px;
+      }
+
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      .status-producing {
+        background: #fbbf24;
+        animation: pulse 2s infinite;
+      }
+
+      .status-completed {
+        background: #10b981;
+      }
+
+      .status-text-producing {
+        color: #fbbf24;
+      }
+
+      .status-text-completed {
+        color: #10b981;
+      }
+
+      .status-time {
+        color: #9ca3af;
+      }
+
+      .cancel-button {
+        background: transparent;
+        border: none;
+        color: #ef4444;
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        transition: all 0.2s;
+      }
+
+      .cancel-button:hover {
+        background: rgba(239, 68, 68, 0.2);
+        color: #fca5a5;
+      }
+
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: #374151;
+        border-radius: 4px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #3b82f6, #60a5fa);
+        transition: width 0.1s ease;
+        border-radius: 4px;
+      }
+
+      .icon {
+        width: 16px;
+        height: 16px;
+        fill: currentColor;
+      }
+
+      .icon-lg {
+        width: 24px;
+        height: 24px;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .production-interface {
+          width: 95vw;
+        }
+
+        .main-grid {
+          grid-template-columns: 1fr;
+          gap: 16px;
+        }
+
+        .card {
+          padding: 16px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="production-interface">
+      <div class="card">
+        <!-- Header -->
+        <div class="header">
+          <div class="header-icon">
+           <i class="fa-solid fa-flask"></i>
+              <path d="M10 2v20M14 2v20M4 7l4-4 4 4M20 17l-4 4-4-4" />
+              <path d="M14 12a2 2 0 0 0-4 0v6a2 2 0 0 0 4 0v-6z" />
+            </svg>
+          </div>
+          <h2 class="header-title">Estação de Produção</h2>
+          <div class="status-indicator">
+            <svg
+              class="icon"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+            >
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+            </svg>
+            <span>Sistema Ativo</span>
+          </div>
+          <button class="close-button" onclick="closeLab()">Fechar</button>
+        </div>
+
+        <div class="main-grid">
+          <!-- Left Panel - Formulas -->
+          <div>
+            <h3 class="section-title">Fórmulas Disponíveis</h3>
+
+            <!-- Formula List -->
+            <div id="formulaList"></div>
+
+            <!-- Selected Formula Details -->
+            <div id="formulaDetails" class="formula-details">
+              <h4 class="ingredients-title">Ingredientes Necessários:</h4>
+              <div id="ingredientsList"></div>
+              <button class="add-button" onclick="addToQueue()">
+                Adicionar à Fila
+              </button>
+            </div>
+          </div>
+
+          <!-- Right Panel - Production Queue -->
+          <div>
+            <h3 class="section-title">Fila de Produção</h3>
+
+            <div id="queueContainer">
+              <div class="empty-queue">
+                <svg
+                  class="empty-icon"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                >
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12,6 12,12 16,14" />
+                </svg>
+                <p class="empty-text">Nenhuma produção em andamento</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Data
+      let formulas = [];
+      let selectedFormula = null;
+      let productionQueue = [];
+      let previousCompletedCount = 0;
+
+      // Icons
+      const icons = {
+        flask:
+          '<path d="M10 2v20M14 2v20M4 7l4-4 4 4M20 17l-4 4-4-4"/><path d="M14 12a2 2 0 0 0-4 0v6a2 2 0 0 0 4 0v-6z"/>',
+        droplets:
+          '<path d="M7 16.3c2.2 0 4-1.83 4-4.05 0-1.16-.57-2.26-1.71-3.19S7.29 6.75 7 5.3c-.29 1.45-1.14 2.84-2.29 3.76S3 11.1 3 12.25c0 2.22 1.8 4.05 4 4.05z"/><path d="M12.56 6.6A10.97 10.97 0 0 0 14 3.02c.5 2.5 2.04 4.6 4.14 5.93a10.97 10.97 0 0 0 1.26 3.18 9 9 0 0 1-2.46-1.05A7.96 7.96 0 0 1 12.56 6.6z"/>',
+        beaker:
+          '<path d="M4.5 3h15"/><path d="M6 3v16a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V3"/><path d="M6 14h12"/>',
+        checkCircle:
+          '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22,4 12,14.01 9,11.01"/>',
+        x: '<path d="M18 6 6 18"/><path d="m6 6 12 12"/>',
+      };
+
+      function getIcon(iconName) {
+        return `<svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">${
+          icons[iconName] || icons.flask
+        }</svg>`;
+      }
+
+      // Sound function
+      function playCompletionSound() {
+        try {
+          const audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(
+            600,
+            audioContext.currentTime + 0.1
+          );
+          oscillator.frequency.setValueAtTime(
+            800,
+            audioContext.currentTime + 0.2
+          );
+
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(
+            0.01,
+            audioContext.currentTime + 0.3
+          );
+
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 0.3);
+        } catch (error) {
+          console.log("Audio not supported");
+        }
+      }
+
+      // NUI Message Handler
+      window.addEventListener("message", function (event) {
+        const data = event.data;
+
+        switch (data.action) {
+          case "openLab":
+            formulas = data.recipes;
+            selectedFormula = formulas[0] || null;
+            document.body.style.display = "block";
+            renderFormulas();
+            renderFormulaDetails();
+            renderQueue();
+            break;
+
+          case "closeLab":
+            document.body.style.display = "none";
+            productionQueue = [];
+            break;
+
+          case "productionCompleted":
+            completeProduction(data.productionId);
+            break;
+        }
+      });
+
+      // Render functions
+      function renderFormulas() {
+        const container = document.getElementById("formulaList");
+        container.innerHTML = formulas
+          .map(
+            (formula) => `
+                <div class="formula-item ${
+                  selectedFormula && selectedFormula.id === formula.id
+                    ? "selected"
+                    : ""
+                }" 
+                     onclick="selectFormula('${formula.id}')">
+                    <div class="formula-header">
+                        <span class="formula-name">${formula.name}</span>
+                        <span class="formula-purity">${formula.purity}</span>
+                    </div>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function renderFormulaDetails() {
+        if (!selectedFormula) return;
+
+        const ingredientsList = document.getElementById("ingredientsList");
+        ingredientsList.innerHTML = selectedFormula.ingredients
+          .map(
+            (ingredient) => `
+                <div class="ingredient-item">
+                    <div class="ingredient-icon">
+                        ${getIcon("flask")}
+                    </div>
+                    <span class="ingredient-name">${ingredient.label}</span>
+                    <span class="ingredient-amount">${ingredient.amount}x</span>
+                </div>
+            `
+          )
+          .join("");
+      }
+
+      function renderQueue() {
+        const container = document.getElementById("queueContainer");
+
+        if (productionQueue.length === 0) {
+          container.innerHTML = `
+                    <div class="empty-queue">
+                        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <circle cx="12" cy="12" r="10"/>
+                            <polyline points="12,6 12,12 16,14"/>
+                        </svg>
+                        <p class="empty-text">Nenhuma produção em andamento</p>
+                    </div>
+                `;
+          return;
+        }
+
+        container.innerHTML = `
+                <div class="queue-container">
+                    ${productionQueue
+                      .map(
+                        (item) => `
+                        <div class="queue-item">
+                            <div class="queue-header">
+                                <div class="queue-info">
+                                    <h5>${item.formula.name}</h5>
+                                    <div class="queue-status">
+                                        ${
+                                          item.status === "producing"
+                                            ? `
+                                            <div class="status-dot status-producing"></div>
+                                            <span class="status-text-producing">Produzindo</span>
+                                            <span class="status-time">${formatTime(
+                                              item.progress,
+                                              item.formula.productionTime
+                                            )}s</span>
+                                        `
+                                            : `
+                                            ${getIcon("checkCircle")}
+                                            <span class="status-text-completed">Concluído</span>
+                                        `
+                                        }
+                                    </div>
+                                </div>
+                                <button class="cancel-button" onclick="removeFromQueue('${
+                                  item.id
+                                }')">
+                                    ${getIcon("x")}
+                                </button>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${
+                                  item.progress
+                                }%"></div>
+                            </div>
+                        </div>
+                    `
+                      )
+                      .join("")}
+                </div>
+            `;
+      }
+
+      // Utility functions
+      function formatTime(progress, totalTime) {
+        const remaining = Math.max(0, totalTime - (progress / 100) * totalTime);
+        return Math.ceil(remaining / 1000);
+      }
+
+      function selectFormula(id) {
+        selectedFormula = formulas.find((f) => f.id === id);
+        renderFormulas();
+        renderFormulaDetails();
+      }
+
+      function addToQueue() {
+        if (!selectedFormula) return;
+
+        // Enviar para o servidor
+        fetch(`https://${GetParentResourceName()}/startProduction`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({
+            recipeId: selectedFormula.id,
+          }),
+        })
+          .then((resp) => resp.json())
+          .then((resp) => {
+            if (resp.success) {
+              const newItem = {
+                id: resp.productionId,
+                formula: selectedFormula,
+                startTime: Date.now(),
+                progress: 0,
+                status: "producing",
+              };
+              productionQueue.push(newItem);
+              renderQueue();
+            }
+          });
+      }
+
+      function removeFromQueue(id) {
+        // Enviar cancelamento para o servidor
+        fetch(`https://${GetParentResourceName()}/cancelProduction`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({
+            productionId: id,
+          }),
+        });
+
+        productionQueue = productionQueue.filter((item) => item.id !== id);
+        renderQueue();
+      }
+
+      function completeProduction(productionId) {
+        const item = productionQueue.find((p) => p.id === productionId);
+        if (item) {
+          item.status = "completed";
+          item.progress = 100;
+          playCompletionSound();
+          renderQueue();
+        }
+      }
+
+      function closeLab() {
+        fetch(`https://${GetParentResourceName()}/closeLab`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json; charset=UTF-8",
+          },
+          body: JSON.stringify({}),
+        });
+      }
+
+      function updateProgress() {
+        let hasChanges = false;
+
+        productionQueue = productionQueue.map((item) => {
+          if (item.status === "producing") {
+            const elapsed = Date.now() - item.startTime;
+            const progress = Math.min(
+              (elapsed / item.formula.productionTime) * 100,
+              100
+            );
+
+            if (Math.abs(item.progress - progress) > 1) {
+              hasChanges = true;
+            }
+            return { ...item, progress };
+          }
+          return item;
+        });
+
+        if (hasChanges) {
+          renderQueue();
+        }
+      }
+
+      // Start progress update interval
+      setInterval(updateProgress, 100);
+
+      // ESC key handler
+      document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape") {
+          closeLab();
+        }
+      });
+    </script>
+  </body>
+</html>
